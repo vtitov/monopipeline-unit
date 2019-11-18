@@ -1,0 +1,3 @@
+[submodule "docs/asciidoc/images"]
+	path = docs/asciidoc/images
+	url = https://github.com/vtitov/monopipeline-images

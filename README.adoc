@@ -4,6 +4,17 @@
 
 derived from  https://github.com/macg33zr/pipelineUnit
 
+----
+git clone --recurse-submodules https://github.com/vtitov/monopipeline-unit.git
+----
+
+----
+git clone --recurse-submodules https://github.com/vtitov/monopipeline-unit.git
+cd monopipeline-unit
+git submodule update --init --recursive
+----
+
+
 == Local Build & Run
 === Build from gradle
 [source,bash]
