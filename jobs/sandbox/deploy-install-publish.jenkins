@@ -1,0 +1,12 @@
+pipeline {
+    agent any
+    stages {
+        stage('deploy-install-publish') {
+            steps {
+                sh "./gradlew publish"
+                // or sh "./configure && make install"
+                // or sh "./mvnw deploy"
+                // or sh "./sbt publish"
+                // or sh "./mill all _.publish"
+                // or ...
+            }}}}

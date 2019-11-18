@@ -1,0 +1,15 @@
+= Developing and Validating Jenkins Pipelines
+
+Jenkins is a popular CI tool with intuitive GUI, it was created to automate software build and test process.
+
+Jenkins has many extensions provided by multiple plugins.
+
+In the past Jenkins jobs had to be created as “freestyle jobs”, i.e. set of GUI forms with appropriate data, translated into xml configuration files. Now it is possible to create pipeline jobs. Pipeline job is a groovy script named by default Jenkinsfile and executed by Jenkins.
+
+Pipeline job can grow and become pretty complicated. And  like any piece of software code it requires some sort of validation. Jenkins developers suggest using JenkinsUnit library. Unfortunately JenkinsUnit does not support preferred and more powerful style of writing Jenkins jobs: declarative pipelines
+
+There is a pipelineUnit project which extends JenkinsUnit and allows testing declarative pipeline code. Although both of these unit testing tools do not require running Jenkins instance, they provide pipeline author with rich set of capabilities to quickly detect and fix most errors in the pipeline code.
+
+Nevertheless there is still always a possibility of some subtle errors which could be detected only with a real Jenkins installation. Such issues can be found with e.g. test-harness or acceptance-test-harness frameworks created by Jenkins team to test Jenkins core and plugins. Both frameworks use JUnit4 and expect tests written as java code in maven project.
+
+We believe that using java is too strict requirement for Jenkins pipeline author. So we suggest and use robotframework to test Jenkins jobs with real Jenkins installation.

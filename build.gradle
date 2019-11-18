@@ -1,0 +1,140 @@
+
+plugins {
+    id 'org.asciidoctor.jvm.base' version '2.2.0'
+    id 'org.asciidoctor.jvm.convert' version '2.2.0'
+    id 'org.asciidoctor.jvm.pdf' version '2.2.0'
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+group = "com.github.vtitov.testing-jenkins-pipelines"
+archivesBaseName = "monopipeline-unit"
+version = "0.1.0-SNAPSHOT"
+
+
+// Grape configuration is used to test @Grape annotation in unit tests using grapeConfig.xml
+configurations {
+    grape { // Note our simple use case does not use or support transitive dependencies
+        transitive = false
+    }
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.4.16'
+    //implementation 'org.codehaus.groovy:groovy-all:2.4.16'
+
+    // The production code uses the SLF4J logging API at compile time
+    //compile 'org.slf4j:slf4j-api:1.7.25'
+
+    // JenkinsPipelineUnit for testing pipelines from:
+    // https://github.com/lesfurets/JenkinsPipelineUnit
+    testCompile 'com.lesfurets:jenkins-pipeline-unit:1.1'
+
+     // For Spock unit tests
+    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
+    testCompile 'cglib:cglib-nodep:3.2.2'
+    testCompile 'org.objenesis:objenesis:1.2'
+    testCompile 'org.assertj:assertj-core:3.7.0'
+
+    implementation 'org.hamcrest:hamcrest-core:2.1'
+
+
+    testCompile group: 'net.javacrumbs.json-unit', name: 'json-unit-parent', version: '2.6.1'
+    testCompile group: 'org.xmlunit', name: 'xmlunit-core', version: '2.6.2'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.11.1'
+
+    testCompile group: 'org.apache.commons', name: 'commons-csv', version: '1.6'
+
+    //testCompile group: 'io.wcm.devops.jenkins', name: 'io.wcm.devops.jenkins.pipeline-library', version: '1.4.0'
+}
+
+
+def revealjsBuildDir = 'build/docs/revealjs/'
+def revealjsInBuildDir = 'docs/revealjs/'
+def revealjsDocDir = 'docs/asciidoc/'
+task checkoutRevealjs(type:Exec) {
+    commandLine 'git', 'clone', '-b', '3.7.0', '--depth', '1', 'https://github.com/hakimel/reveal.js.git', "$revealjsBuildDir/reveal.js"
+    //store the output instead of printing to the console:
+    standardOutput = new ByteArrayOutputStream()
+    errorOutput = new ByteArrayOutputStream()
+    //extension method checkoutRevealjs.output() can be used to obtain the output:
+    ext.output = { return standardOutput.toString() }
+    ext.error = { return standardError.toString() }
+}
+
+task httpServer() {
+    doLast {
+        def root = new File(project.buildDir, '/docs/revealjs/')
+//        def root = new File(project.buildDir, '/build/docs/revealjs/')
+        def port = 5000
+        def factory = new org.gradle.plugins.javascript.envjs.http.simple.SimpleHttpFileServerFactory();
+        def server = factory.start(root, port)
+        println "HTTP server started on $port"
+        while(true) Thread.sleep(1000)
+    }
+}
+task rubyHttpserver(type:Exec) {
+    workingDir revealjsBuildDir
+    //commandLine 'ruby', '-run', '-e', 'httpd', '.', '-p', '5000', '-b', '127.0.0.1'
+    commandLine 'ruby', '-run', '-e', 'httpd', '.', '-p', '5000', '-b', '0.0.0.0'
+}
+
+def asciidoctorRevealjsBinary = System.getProperty("user.home")+'/.gem/ruby/2.6.0/bin/asciidoctor-revealjs'
+
+// TODO rewrite in "gradlish" way
+task asciidoctorRevealjs(type: Exec) {
+    //workingDir "$revealjsDocDir"
+    commandLine 'ruby', asciidoctorRevealjsBinary,
+        '-D', "$revealjsBuildDir",
+        '-a', 'sandbox-dir=../../jobs/sandbox',
+        '-a', 'project-dir=../../',
+        revealjsDocDir + 'presentation.adoc'
+}
+task copyImages4Revealjs(type: Copy) {
+    from('docs/asciidoc/images')
+    into("$revealjsBuildDir/images")
+    include('*.png')
+}
+
+asciidoctorj {
+    modules {
+        diagram.version '1.5.16'
+    }
+}
+asciidoctor {
+    sourceDir = file('docs/asciidoc')
+}
+asciidoctorPdf {
+    sourceDir = file('docs/asciidoc')
+    attributes \
+        'data-uri': ''
+}
+
+test {
+    systemProperty "pipeline.stack.write", project.getProperty("pipeline.stack.write") // NB
+}
+
+sourceSets {
+
+    main {
+        resources {
+            srcDirs = [file('src'), file('jobs'), file('vars'), file('resources')]
+        }
+    }
+
+    test {
+        groovy {
+            srcDirs = [file('test/groovy')]
+        }
+        resources {
+            srcDirs = [file('test/resources'), file('test/jenkins')]
+        }
+    }
+}
+
+tasks.withType(Test) {
+    systemProperties["java.util.logging.config.file"] =
+        System.getProperty("java.util.logging.config.file", "test/resources/logging.properties")
+}

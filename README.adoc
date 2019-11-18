@@ -1,0 +1,14 @@
+= monopipeline unit
+:toc:
+:toclevels: 3
+
+derived from  https://github.com/macg33zr/pipelineUnit
+
+== Local Build & Run
+=== Build from gradle
+[source,bash]
+----
+./gradlew test
+----
+
+

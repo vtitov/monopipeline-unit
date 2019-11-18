@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+    stages {
+        stage('init') {
+            steps {
+                sh "{ echo foo ; echo bar; } > words.txt"
+                stash name: 'words', includes: 'words.txt'
+            }}
+        stage('grep') {
+            steps {
+                unstash name: 'words'
+                sh "grep foo words.txt"
+                sh "grep bar words.txt"
+            }}
+    }}

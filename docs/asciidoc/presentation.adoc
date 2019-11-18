@@ -1,0 +1,558 @@
+//= Developing and Validating Jenkins Pipelines
+
+
+:imagesdir: images
+:title-slide-background-image: sb-16x9-bg.png
+//:title-slide-transition: zoom
+//:title-slide-transition-speed: fast
+
+
+//:imagesdir: ./images
+:iconsdir: ./icons
+:stylesdir: ./styles
+
+//:revealjs_theme: beige
+:revealjs_slideNumber: true
+//:revealjs_autoSlide: 600000 // us
+//:revealjs_autoSlide: 120000 // us
+//:revealjs_defaultTiming: 120
+:revealjs_mouseWheel: true
+:revealjs_transition: concave
+//:revealjs_width: 800
+//:revealjs_height: 600
+//:revealjs_width: 1000
+//:revealjs_height: 750
+:revealjs_width: 1200
+:revealjs_height: 900
+
+:revealjs_history: true
+:revealjs_fragmentInURL: true
+
+//:revealjs_plugin_pdf: enabled
+
+:source-highlighter: highlightjs
+//:source-highlighter: prettify
+//:source-highlighter: pigment
+
+:icons: font
+
+//:toc: preamble
+:toc: macro
+:toc-title: Topics
+
+
+:project-dir: .
+:sandbox-dir: jobs/sandbox
+
+//image::sberbank-16x9-bg.png[background, size=cover]
+
+
+//== Topics
+// toc::[]
+
+//[%notitle, data-timing=3,  data-autoslide=3000, background-color="yellow"]
+[background-image=sb-16x9-bg.png]
+== Developing and Validating Jenkins Pipelines
+'''
+Valentin Titov
+
+
+[%notitle]
+== Developing and Validating Jenkins Pipelines
+//image::https://upload.wikimedia.org/wikipedia/en/6/6f/TheAssignment.jpg[background, size=cover]
+image::https://upload.wikimedia.org/wikipedia/en/6/6f/TheAssignment.jpg[background, size=contain]
+
+[NOTE.speaker]
+--
+The Assignment (Or, on the Observing of the Observer of the Observers) by Friedrich Dürrenmatt.
+--
+
+//[timing=3,  autoslide=3000]
+== Jenkins
+
+[.right]
+image::https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Ansible-playbook-output-jenkins.png/640px-Ansible-playbook-output-jenkins.png[]
+
+Jenkins is a free and open source automation server.
+
+Jenkins helps to automate the non-human part of the software development process,
+with continuous integration and facilitating technical aspects of continuous delivery.
+
+[NOTE.speaker]
+--
+//Pragmatism
+----
+* DNY, KISS
+* "Can't be tested" ⇒ can't be
+  deployed
+* Same environment for development,
+  test, production
+* Instructions are executable
+* Documentaion is buildable
+* Language is domain specific (DSL)
+----
+--
+
+
+//[timing=3,  autoslide=3000]
+=== Plugins
+
+[.right]
+image::https://plugins.jenkins.io/assets/css/img/jenkins-voltron-271x294x8.png[jenkins-voltron, width=271px]
+
+Jenkins is a highly extensible product whose functionality can be extended
+through the installation of plugins.
+
+
+[NOTE.speaker]
+--
+. Plugin is a preferred way to implement new functionality
+
+. However, the documentation covered in the
+Guided Tour, Tutorials and User Handbook of this documentation are based
+on a Jenkins installation with the *Blue Ocean plugins* installed,
+. as well as the *"suggested plugins"*,
+which are specified when running through the Post-installation setup wizard.
+--
+
+
+=== Jenkins Maven Archetypes
+//Collection of Maven archetypes to get developers started
+[.source,sh]
+----
+mvn archetype:generate -Dfilter=io.jenkins.archetypes:
+----
+
+[.source,AsciiDoc]
+----
+global-configuration-plugin     Skeleton of a Jenkins plugin with a POM and
+                                an example piece of global configuration
+
+global-shared-library           Uses the Jenkins Pipeline Unit mock library
+                                to test the usage of a Global Shared Library
+
+hello-world-plugin              Skeleton of a Jenkins plugin with a POM and
+                                an example build step
+
+scripted-pipeline               Uses the Jenkins Pipeline Unit mock library
+                                to test the logic inside a Pipeline script
+
+empty-plugin                    Skeleton of a Jenkins plugin with a POM and
+                                an empty source tree
+----
+
+
+== Jenkins Jobs
+
+=== Freestyle
+
+//[data-autoslide="2000"]
+[%step]
+- Select "New Item"
+- Enter an item name,
+- Select "Freestyle project"
+- Fill "Source Code Management"
+- Select "Execute shell"
+- Enter build command, e.g.: ```echo ./gradlew publish```
+- Build Now
+- Last build
+- Console Output
+- Find `Finished: SUCCESS`
+
+[%notitle]
+=== Freestyle Job Page
+image::free-job.png[background, size=contain]
+
+
+=== Pipeline
+The Pipeline plugin was inspired by the Build Flow plugin but aims to improve upon some concepts explored by Build Flow with features like:
+
+- the ability to suspend/resume of executing jobs.
+- checking the pipeline definition into source control (Jenkinsfile)
+- support for extending the domain specific language with additional, organization specific steps, via the "Shared Libraries" feature.
+
+In an adjacent space is the Job DSL plugin which allows the programmatic creation of projects using a DSL.
+
+https://jenkins.io/solutions/pipeline/
+
+[.notes]
+--
+Pipeline
+
+* inspired by the Build Flow plugin
+* Jenkinsfile can be put to source code
+* supports Shared Libraries
+
+see also Job DSL plugin
+--
+
+
+=== "Jenkiknsfile"
+//[.stretch]
+."Jenkiknsfile"
+[source,groovy]
+----
+include::{sandbox-dir}/deploy-install-publish.jenkins[]
+----
+
+
+[%notitle]
+=== Freestyle Job Page
+image::https://jenkins.io/doc/book/resources/pipeline/realworld-pipeline-flow.png[background, size=contain]
+
+
+=== Custom Pipeline
+[.stretch]
+[source,groovy]
+.echo-words.jenkins
+----
+include::{sandbox-dir}/echo-words.jenkins[]
+----
+
+== Pipeline Validation
+
+[data-autoslide="2000"]
+[%step]
+- unit testing with `JenkinsUnit` (no Jenkins)
+- integration testing with `test-harness`
+- acceptance testing with `robotframework`
+
+== JenkinsUnit (Java Junit)
+
+[source,groovy]
+.some-scripted-pipeline/Jenkinsfile
+----
+node {
+    stage('Example') {
+        if (env.BRANCH_NAME == 'master') {
+            echo 'I only execute on the master branch'
+        } else {
+            echo 'I execute elsewhere'
+        }
+    }
+}
+----
+Issues:
+
+. no declarative piplene support:
+. `global-shared-library/README.md` states: `shared-library` directory contains the actual code for the shared library,
+  contents of this directory *should be pushed to a SCM* to be used in Jenkins
+
+== pipelineUnit (Groovy Spock)
+
+//With `SharedLibraryHelpers`  to retrieve pipelines and libraries from the current project
+
+[.stretch]
+[source,java]
+.EchoWordsTest.groovy
+----
+include::{project-dir}/test/groovy/pipeline/EchoWordsTest.groovy[]
+----
+
+== Spock Report
+image::spock-report.png[background, size=contain]
+
+
+== Jenkins Plugin
+
+[%step]
+- generate new plugin from archetype
+- run tests with `test-harness` or `acceptance-test-harness`
+
+
+=== JUnit Testcase
+
+[.stretch]
+[source,java]
+.HelloWorldBuilderTest.java
+----
+    @Rule
+    public JenkinsRule jenkins = new JenkinsRule(); // <1>
+    @Test
+    public void testScriptedPipeline() throws Exception {
+        String agentLabel = "my-agent";
+        jenkins.createOnlineSlave(Label.get(agentLabel));
+        WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
+        String pipelineScript // <2>
+                = "node {\n"
+                + "  greet '" + name + "'\n"
+                + "}";
+        job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
+        WorkflowRun completedBuild = jenkins.assertBuildStatusSuccess(job.scheduleBuild2(0));
+        String expectedString = "Hello, " + name + "!";
+        jenkins.assertLogContains(expectedString, completedBuild);
+    }
+----
+<1> Jenkins instance
+<2> Pipeline
+
+
+== Acceptance Testing
+
+[%step]
+- jenkins war file
+- Configiration as Code (CasC)
+- Robot Framework
+
+=== War File
+
+[%step]
+- vanilla jenkins
+- custom-war-packager with yaml configuration file
+- custom plugin with `mvn hpi:custom-war`
+
+
+=== CasC
+https://plugins.jenkins.io/configuration-as-code
+[source,yaml]
+----
+jenkins:
+  systemMessage: "Jenkins configured automatically by Jenkins Configuration as Code plugin\n\n"
+  numExecutors: 5
+  scmCheckoutRetryCount: 2
+  mode: NORMAL
+----
+
+Groovy Scripting Extension:
+https://plugins.jenkins.io/configuration-as-code-groovy
+
+[source,yaml]
+----
+groovy:
+  - script: >
+      println("This is Groovy script!");
+----
+
+Groovy scripts can be:
+
+- inline, with entry script
+- from url
+- from local file
+
+
+== Robot Framework
+[source,sh]
+----
+mvn archetype:generate \
+  -Dfilter=com.github.markusbernhardt:robotframework-archetype-quickstart
+...
+mvn test
+----
+
+
+[%notitle]
+=== Robot Report
+image::robot-report.png[background, size=contain]
+[NOTE.speaker]
+--
+Robot Report
+--
+
+
+=== Launch Jenkins
+
+//[.stretch]
+[source,Bash]
+----
+Launch JENKINS
+    [Arguments]    ${war_path}   ${jenkins_port}    ${jul_properties}
+    # Starting ${war_path} on port ${JENKINS_PORT} with log properties from ${java_util_logging_config_file}
+    Log     Starting ${war_path} on port ${JENKINS_PORT}
+    ${JH}=  Start Process   java ${JAVA_OPTIONS}
+    ...         -jar    ${war_path}
+    ...         --httpPort\=${jenkins_port}
+    ...         alias=jenkins
+    ...         env:JAVA_ARGS=-Xmx1024m
+    ...         env:CASC_JENKINS_CONFIG=src/test/resources/casc-jenkins
+    ...         env:JENKINS_HOME=target/work-jenkins/
+    ${JENKINS_HANDLE}  Set Variable  ${JH}
+    Log     Started ${WAR_PATH} on ${JENKINS_PORT} with handle ${JENKINS_HANDLE}
+    [Return]  ${JH}
+----
+
+
+[%notitle]
+=== Launch Jenkins Report
+image::launch-jenkins.png[background, size=contain]
+[NOTE.speaker]
+--
+Launch Jenkins Report
+--
+
+
+=== Launch Pipelines
+[source,Bash]
+----
+# to let pipelines apply all triggers/variables
+Idle pipelines launch
+    FOR     ${job}  IN  @{model_job_list}
+            Log to Console      Build Job ${job}
+            Post Request        jenkins    /job/${job}/build
+    END
+----
+
+
+[%notitle]
+=== Launch Pipeline Report
+image::launch-pipeline.png[background, size=contain]
+[NOTE.speaker]
+--
+Launch Pipeline Report
+--
+
+
+[%notitle]
+=== Check Pipeline Report
+image::robot-check-pipeline.png[background, size=contain]
+[NOTE.speaker]
+--
+Check Pipeline Report
+--
+
+
+=== "Homework"
+
+. Generic Webhook Trigger
+.. Create declarative pipeline with Generic Webhook Trigger
+.. Write unit test(s)
+.. Write acceptance tests(s)
+
+. URL Trigger
+.. Create declarative pipeline with URL Trigger
+.. Write unit test(s)
+.. Write acceptance tests(s)
+
+
+== Q&A
+
+
+== Backup Slides
+
+== Archetypes
+
+=== Genetate Artifacts from Jenkins Archetypes
+[source,sh]
+.generate-artifacts.sh
+----
+#!/bin/sh
+VERSION=1.6
+for i in \
+  empty-plugin global-configuration-plugin hello-world-plugin \
+  scripted-pipeline global-shared-library
+do  echo mvn archetype:generate -B \
+     -DarchetypeGroupId=io.jenkins.archetypes \
+     -DarchetypeArtifactId=$i \
+     -DarchetypeVersion=${VERSION} \
+     -DartifactId=some-${i}
+done
+
+echo 'for i in some-* ; do (echo $i && cd $i && pwd && mvn verify) ; done'
+
+----
+
+[source,sh]
+----
+# e.g.
+mvn archetype:generate -B \
+  -DarchetypeGroupId=io.jenkins.archetypes \
+  -DarchetypeArtifactId=scripted-pipeline \
+  -DarchetypeVersion=1.6 \
+  -DartifactId=some-scripted-pipeline
+----
+[source,sh]
+for i in some-scripted-pipeline ; do (echo $i && cd $i && pwd && mvn verify) ; done
+
+[.notes]
+--
+[source,sh]
+----
+mvn archetype:generate -B -DarchetypeGroupId=io.jenkins.archetypes -DarchetypeArtifactId=empty-plugin -DarchetypeVersion=1.6 -DartifactId=some-empty-plugin
+
+mvn archetype:generate -B -DarchetypeGroupId=io.jenkins.archetypes -DarchetypeArtifactId=global-configuration-plugin -DarchetypeVersion=1.6 -DartifactId=some-global-configuration-plugin
+
+mvn archetype:generate -B -DarchetypeGroupId=io.jenkins.archetypes -DarchetypeArtifactId=hello-world-plugin -DarchetypeVersion=1.6 -DartifactId=some-hello-world-plugin
+
+mvn archetype:generate -B -DarchetypeGroupId=io.jenkins.archetypes -DarchetypeArtifactId=scripted-pipeline -DarchetypeVersion=1.6 -DartifactId=some-scripted-pipeline
+
+mvn archetype:generate -B -DarchetypeGroupId=io.jenkins.archetypes -DarchetypeArtifactId=global-shared-library -DarchetypeVersion=1.6 -DartifactId=some-global-shared-library
+----
+--
+
+
+=== New Plugin
+[source,sh]
+----
+mvn archetype:generate -B \
+  -DarchetypeGroupId=io.jenkins.archetypes \
+  -DarchetypeArtifactId=empty-plugin \
+  -DarchetypeVersion=1.6 \
+  -DartifactId=sandbox-plugin
+cd sandbox-plugin
+----
+Add to new `pom.xml` required plugins as test dependencies, e.g. `workflow-aggregator` and `support-core`. Adjust versions of dependencies, then:
+[source,sh]
+----
+mvn verify   # run tests
+mvn hpi:run -Denforcer.skip -DskipTests   # run jenkins manually
+mvn hpi:custom-war install -Denforcer.skip -DskipTests # build new jenkins war file
+java -jar target/sandbox-plugin.war -Djenkins.install.runSetupWizard=false \
+  -Dpermissive-script-security.enabled=true   # install jenkins from war
+----
+
+
+=== robotframework-archetype-quickstart
+
+[source,sh]
+----
+mvn -B archetype:generate \
+  -DarchetypeGroupId=com.github.markusbernhardt \
+  -DarchetypeArtifactId=robotframework-archetype-quickstart \
+  -DarchetypeVersion=1.0.1 \
+  -DgroupId=com.yourcompany.yourdepartment \
+  -DartifactId=robot-quick
+----
+
+== Freestyle Slides
+
+[%notitle]
+=== Welcome To Jenkins
+image::welcome-to-jenkins.png[background, size=contain]
+
+[%notitle]
+=== New Item
+image::free-new.png[background, size=contain]
+
+[%notitle]
+=== Execute Shell
+image::free-exec-shell.png[background, size=contain]
+
+[%notitle]
+=== Gradle Publish
+image::free-gradle-publish.png[background, size=contain]
+
+[%notitle]
+=== Freestyle Job
+image::free-job.png[background, size=contain]
+
+[%notitle]
+=== Freestyle Build
+image::free-build.png[background, size=contain]
+
+[%notitle]
+=== Freestyle Console Output
+image::free-console.png[background, size=contain]
+
+
+== Pipeline Slides
+
+[%notitle]
+=== Pipeline Generator
+image::pipeline-generator.png[background, size=contain]
+
+[%notitle]
+=== Pipeline Job
+image::pipeline-job.png[background, size=contain]
+
+[%notitle]
+=== Pipeline Replay
+image::pipeline-replay.png[background, size=contain]
