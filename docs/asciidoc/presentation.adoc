@@ -1,6 +1,5 @@
 //= Developing and Validating Jenkins Pipelines
 
-
 :imagesdir: images
 :title-slide-background-image: sb-16x9-bg.png
 //:title-slide-transition: zoom
@@ -40,12 +39,8 @@
 :toc: macro
 :toc-title: Topics
 
-
-:project-dir: .
-:sandbox-dir: jobs/sandbox
-
-//image::sberbank-16x9-bg.png[background, size=cover]
-
+:project-dir: ../..
+:sandbox-dir: ../../jobs/sandbox
 
 //== Topics
 // toc::[]
@@ -55,6 +50,10 @@
 == Developing and Validating Jenkins Pipelines
 '''
 Valentin Titov
+
+[%notitle]
+=== Pipeline Flow
+image::https://jenkins.io/doc/book/resources/pipeline/realworld-pipeline-flow.png[background, size=contain]
 
 
 [%notitle]
@@ -144,10 +143,15 @@ empty-plugin                    Skeleton of a Jenkins plugin with a POM and
 
 == Jenkins Jobs
 
-=== Freestyle
+* Freestyle
+* Pipeline
+** Scripted Pipeline
+** Declarative Pipeline
+
+== Freestyle
 
 //[data-autoslide="2000"]
-[%step]
+//[%step]
 - Select "New Item"
 - Enter an item name,
 - Select "Freestyle project"
@@ -164,7 +168,7 @@ empty-plugin                    Skeleton of a Jenkins plugin with a POM and
 image::free-job.png[background, size=contain]
 
 
-=== Pipeline
+== Pipeline
 The Pipeline plugin was inspired by the Build Flow plugin but aims to improve upon some concepts explored by Build Flow with features like:
 
 - the ability to suspend/resume of executing jobs.
@@ -196,11 +200,6 @@ include::{sandbox-dir}/deploy-install-publish.jenkins[]
 ----
 
 
-[%notitle]
-=== Freestyle Job Page
-image::https://jenkins.io/doc/book/resources/pipeline/realworld-pipeline-flow.png[background, size=contain]
-
-
 === Custom Pipeline
 [.stretch]
 [source,groovy]
@@ -209,10 +208,16 @@ image::https://jenkins.io/doc/book/resources/pipeline/realworld-pipeline-flow.pn
 include::{sandbox-dir}/echo-words.jenkins[]
 ----
 
+
+[%notitle]
+=== Pipeline Flow
+image::https://jenkins.io/doc/book/resources/pipeline/realworld-pipeline-flow.png[background, size=contain]
+
+
 == Pipeline Validation
 
 [data-autoslide="2000"]
-[%step]
+//[%step]
 - unit testing with `JenkinsUnit` (no Jenkins)
 - integration testing with `test-harness`
 - acceptance testing with `robotframework`
@@ -232,7 +237,6 @@ node {
     }
 }
 ----
-Issues:
 
 . no declarative piplene support:
 . `global-shared-library/README.md` states: `shared-library` directory contains the actual code for the shared library,
@@ -255,7 +259,7 @@ image::spock-report.png[background, size=contain]
 
 == Jenkins Plugin
 
-[%step]
+//[%step]
 - generate new plugin from archetype
 - run tests with `test-harness` or `acceptance-test-harness`
 
@@ -289,14 +293,14 @@ image::spock-report.png[background, size=contain]
 
 == Acceptance Testing
 
-[%step]
+//[%step]
 - jenkins war file
 - Configiration as Code (CasC)
 - Robot Framework
 
 === War File
 
-[%step]
+//[%step]
 - vanilla jenkins
 - custom-war-packager with yaml configuration file
 - custom plugin with `mvn hpi:custom-war`
@@ -410,17 +414,18 @@ Check Pipeline Report
 --
 
 
-=== "Homework"
+== TODO
 
-. Generic Webhook Trigger
-.. Create declarative pipeline with Generic Webhook Trigger
-.. Write unit test(s)
-.. Write acceptance tests(s)
+* Generic Webhook Trigger
+* URL Trigger
+* Webhook Step
+* Build Step
 
-. URL Trigger
-.. Create declarative pipeline with URL Trigger
-.. Write unit test(s)
-.. Write acceptance tests(s)
+---
+
+. Create declarative pipeline with trigger(s)
+. Write unit test(s)
+. Write acceptance tests(s)
 
 
 == Q&A

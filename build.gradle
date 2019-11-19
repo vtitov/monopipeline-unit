@@ -105,11 +105,12 @@ asciidoctorj {
 }
 asciidoctor {
     sourceDir = file('docs/asciidoc')
+    attributes  'sandbox-dir': 'jobs/sandbox',
+                'project-dir' : '.'
 }
 asciidoctorPdf {
     sourceDir = file('docs/asciidoc')
-    attributes \
-        'data-uri': ''
+    attributes  'data-uri': ''
 }
 
 test {
